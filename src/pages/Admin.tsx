@@ -37,6 +37,8 @@ export const Admin = () => {
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadError, setUploadError] = useState('');
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,73 +66,80 @@ export const Admin = () => {
   };
 
   const fetchContent = async () => {
-    setHero(await fetchContentService('hero', { 
-      title: 'Manifesting God’s Dominion Worldwide.', 
-      subtitle: 'To disciple nations by transforming societal structures through biblical principles.',
-      image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1920'
-    }));
-    
-    setAbout(await fetchContentService('about', {
-      title: 'Our Mission & Vision',
-      subtitle: 'Banji Lagunju Foundation works to manifest God’s dominion in all nations worldwide through the church.',
-      image: 'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=800'
-    }));
+    setIsLoadingContent(true);
+    try {
+      setHero(await fetchContentService('hero', { 
+        title: 'Manifesting God’s Dominion Worldwide.', 
+        subtitle: 'To disciple nations by transforming societal structures through biblical principles.',
+        image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1920'
+      }));
+      
+      setAbout(await fetchContentService('about', {
+        title: 'Our Mission & Vision',
+        subtitle: 'Banji Lagunju Foundation works to manifest God’s dominion in all nations worldwide through the church.',
+        image: 'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=800'
+      }));
 
-    setPrograms(await fetchContentService('programs', PROGRAMS));
-    setStats(await fetchContentService('stats', STATS));
-    setTestimonials(await fetchContentService('testimonials', TESTIMONIALS));
-    setBlogPosts(await fetchContentService('blogPosts', BLOG_POSTS));
-    
-    setTeam(await fetchContentService('team', [
-      { id: '1', name: 'Banji Lagunju', role: 'Founder & Chairman', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400' },
-      { id: '2', name: 'Dr. Jane Smith', role: 'Executive Director', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=400' },
-      { id: '3', name: 'Robert Wilson', role: 'Head of Programs', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400' }
-    ]));
+      setPrograms(await fetchContentService('programs', PROGRAMS));
+      setStats(await fetchContentService('stats', STATS));
+      setTestimonials(await fetchContentService('testimonials', TESTIMONIALS));
+      setBlogPosts(await fetchContentService('blogPosts', BLOG_POSTS));
+      
+      setTeam(await fetchContentService('team', [
+        { id: '1', name: 'Banji Lagunju', role: 'Founder & Chairman', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400' },
+        { id: '2', name: 'Dr. Jane Smith', role: 'Executive Director', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=400' },
+        { id: '3', name: 'Robert Wilson', role: 'Head of Programs', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400' }
+      ]));
 
-    setContact(await fetchContentService('contact', {
-      address: 'Grace Assembly City Church, Kampala, Uganda',
-      phone: '07066894652',
-      email: 'info@bjlfoundation.org',
-      facebook: 'https://facebook.com/bjlfoundation',
-      twitter: 'https://twitter.com/bjlfoundation',
-      instagram: 'https://instagram.com/bjl.foundation',
-      linkedin: 'https://linkedin.com/company/bjlfoundation',
-      headerImage: 'https://images.unsplash.com/photo-1523966211575-eb4a01e7dd51?auto=format&fit=crop&q=80&w=1920',
-      headerTitle: 'Contact Us',
-      headerSubtitle: "Have questions about our programs, partnerships, or volunteering? We'd love to hear from you."
-    }));
+      setContact(await fetchContentService('contact', {
+        address: 'Grace Assembly City Church, Kampala, Uganda',
+        phone: '07066894652',
+        email: 'info@bjlfoundation.org',
+        facebook: 'https://facebook.com/bjlfoundation',
+        twitter: 'https://twitter.com/bjlfoundation',
+        instagram: 'https://instagram.com/bjl.foundation',
+        linkedin: 'https://linkedin.com/company/bjlfoundation',
+        headerImage: 'https://images.unsplash.com/photo-1523966211575-eb4a01e7dd51?auto=format&fit=crop&q=80&w=1920',
+        headerTitle: 'Contact Us',
+        headerSubtitle: "Have questions about our programs, partnerships, or volunteering? We'd love to hear from you."
+      }));
 
-    setInvolved(await fetchContentService('involved', {
-      headerImage: 'https://images.unsplash.com/photo-1559027615-cd26714e93af?auto=format&fit=crop&q=80&w=1920',
-      headerTitle: 'Get Involved',
-      headerSubtitle: 'There are many ways to support our mission. Join us in creating lasting change for communities in need.',
-      volunteerTitle: 'Become a Volunteer',
-      volunteerSubtitle: 'Ready to take the first step? Fill out the form and our volunteer coordinator will get in touch with you shortly.'
-    }));
+      setInvolved(await fetchContentService('involved', {
+        headerImage: 'https://images.unsplash.com/photo-1559027615-cd26714e93af?auto=format&fit=crop&q=80&w=1920',
+        headerTitle: 'Get Involved',
+        headerSubtitle: 'There are many ways to support our mission. Join us in creating lasting change for communities in need.',
+        volunteerTitle: 'Become a Volunteer',
+        volunteerSubtitle: 'Ready to take the first step? Fill out the form and our volunteer coordinator will get in touch with you shortly.'
+      }));
 
-    setGallery(await fetchContentService('gallery', [
-      'https://images.unsplash.com/photo-1544427920-c49ccfb85579?auto=format&fit=crop&q=80&w=400',
-      'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=400',
-      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400',
-      'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&q=80&w=400',
-      'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=400',
-      'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=400'
-    ]));
+      setGallery(await fetchContentService('gallery', [
+        'https://images.unsplash.com/photo-1544427920-c49ccfb85579?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=400'
+      ]));
 
-    setGallerySection(await fetchContentService('gallerySection', {
-      title: 'Our Gallery',
-      subtitle: 'Follow our journey and see the impact of our programs through our lens.'
-    }));
+      setGallerySection(await fetchContentService('gallerySection', {
+        title: 'Our Gallery',
+        subtitle: 'Follow our journey and see the impact of our programs through our lens.'
+      }));
 
-    setNewsSection(await fetchContentService('newsSection', {
-      title: 'Latest News & Stories',
-      subtitle: 'Stay updated with our latest projects, success stories, and community updates.'
-    }));
+      setNewsSection(await fetchContentService('newsSection', {
+        title: 'Latest News & Stories',
+        subtitle: 'Stay updated with our latest projects, success stories, and community updates.'
+      }));
 
-    setSettings(await fetchContentService('settings', {
-      logo: '',
-      favicon: ''
-    }));
+      setSettings(await fetchContentService('settings', {
+        logo: '',
+        favicon: ''
+      }));
+    } catch (error) {
+      console.error("Error fetching content:", error);
+    } finally {
+      setIsLoadingContent(false);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, onUpload: (url: string) => void) => {
@@ -139,6 +148,7 @@ export const Admin = () => {
 
     setUploadStatus('uploading');
     setUploadProgress(0);
+    setUploadError('');
 
     const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
@@ -151,13 +161,25 @@ export const Admin = () => {
       (error) => {
         console.error('Upload failed', error);
         setUploadStatus('error');
-        setTimeout(() => setUploadStatus('idle'), 3000);
+        setUploadError(error.message);
+        setTimeout(() => {
+          setUploadStatus('idle');
+          setUploadError('');
+        }, 5000);
       },
       () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           onUpload(downloadURL);
           setUploadStatus('success');
           setTimeout(() => setUploadStatus('idle'), 2000);
+        }).catch((error) => {
+          console.error('Failed to get download URL', error);
+          setUploadStatus('error');
+          setUploadError('Failed to get download URL');
+          setTimeout(() => {
+            setUploadStatus('idle');
+            setUploadError('');
+          }, 5000);
         });
       }
     );
@@ -258,15 +280,18 @@ export const Admin = () => {
             <h1 className="text-3xl font-bold text-brand-blue">Admin Dashboard</h1>
             <p className="text-gray-600">Manage your website content</p>
           </div>
-          <button 
-            onClick={() => {
-              localStorage.removeItem('admin_user');
-              setIsLoggedIn(false);
-            }}
-            className="px-4 py-2 text-red-600 font-medium hover:bg-red-50 rounded-lg transition-colors"
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-4">
+            {isLoadingContent && <span className="text-sm text-gray-500">Loading content...</span>}
+            <button 
+              onClick={() => {
+                localStorage.removeItem('admin_user');
+                setIsLoggedIn(false);
+              }}
+              className="px-4 py-2 text-red-600 font-medium hover:bg-red-50 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -322,7 +347,7 @@ export const Admin = () => {
                         />
                         <label className="cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                           <Upload className="w-5 h-5 text-gray-600" />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setSettings({ ...settings, logo: url }))} />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setSettings(prev => ({ ...prev, logo: url })))} />
                         </label>
                       </div>
                       {settings.logo && (
@@ -341,7 +366,7 @@ export const Admin = () => {
                         />
                         <label className="cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                           <Upload className="w-5 h-5 text-gray-600" />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setSettings({ ...settings, favicon: url }))} />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setSettings(prev => ({ ...prev, favicon: url })))} />
                         </label>
                       </div>
                       {settings.favicon && (
@@ -365,7 +390,7 @@ export const Admin = () => {
                         />
                         <label className="cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                           <Upload className="w-5 h-5 text-gray-600" />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setHero({ ...hero, image: url }))} />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setHero(prev => ({ ...prev, image: url })))} />
                         </label>
                       </div>
                       {hero.image && (
@@ -393,7 +418,7 @@ export const Admin = () => {
                         />
                         <label className="cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                           <Upload className="w-5 h-5 text-gray-600" />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setAbout({ ...about, image: url }))} />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setAbout(prev => ({ ...prev, image: url })))} />
                         </label>
                       </div>
                       {about.image && (
@@ -445,9 +470,11 @@ export const Admin = () => {
                             <label className="cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                               <Upload className="w-5 h-5 text-gray-600" />
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => {
-                                const newGallery = [...gallery];
-                                newGallery[idx] = url;
-                                setGallery(newGallery);
+                                setGallery(prev => {
+                                  const newGallery = [...prev];
+                                  newGallery[idx] = url;
+                                  return newGallery;
+                                });
                               })} />
                             </label>
                             <button 
@@ -534,9 +561,11 @@ export const Admin = () => {
                             <label className="cursor-pointer bg-gray-50 p-1 rounded hover:bg-gray-100">
                               <Upload className="w-4 h-4 text-gray-500" />
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => {
-                                const newPrograms = [...programs];
-                                newPrograms[idx].image = url;
-                                setPrograms(newPrograms);
+                                setPrograms(prev => {
+                                  const newPrograms = [...prev];
+                                  newPrograms[idx].image = url;
+                                  return newPrograms;
+                                });
                               })} />
                             </label>
                           </div>
@@ -667,9 +696,11 @@ export const Admin = () => {
                             <label className="cursor-pointer bg-gray-50 p-1 rounded hover:bg-gray-100">
                               <Upload className="w-3 h-3 text-gray-500" />
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => {
-                                const newT = [...testimonials];
-                                newT[idx].image = url;
-                                setTestimonials(newT);
+                                setTestimonials(prev => {
+                                  const newT = [...prev];
+                                  newT[idx].image = url;
+                                  return newT;
+                                });
                               })} />
                             </label>
                           </div>
@@ -755,9 +786,11 @@ export const Admin = () => {
                             <label className="cursor-pointer bg-gray-50 p-1 rounded hover:bg-gray-100">
                               <Upload className="w-3 h-3 text-gray-500" />
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => {
-                                const newPosts = [...blogPosts];
-                                newPosts[idx].image = url;
-                                setBlogPosts(newPosts);
+                                setBlogPosts(prev => {
+                                  const newPosts = [...prev];
+                                  newPosts[idx].image = url;
+                                  return newPosts;
+                                });
                               })} />
                             </label>
                           </div>
@@ -851,9 +884,11 @@ export const Admin = () => {
                             <label className="cursor-pointer bg-gray-50 p-1 rounded hover:bg-gray-100">
                               <Upload className="w-3 h-3 text-gray-500" />
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => {
-                                const newTeam = [...team];
-                                newTeam[idx].image = url;
-                                setTeam(newTeam);
+                                setTeam(prev => {
+                                  const newTeam = [...prev];
+                                  newTeam[idx].image = url;
+                                  return newTeam;
+                                });
                               })} />
                             </label>
                           </div>
@@ -909,7 +944,7 @@ export const Admin = () => {
                         />
                         <label className="cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                           <Upload className="w-5 h-5 text-gray-600" />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setContact({ ...contact, headerImage: url }))} />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setContact(prev => ({ ...prev, headerImage: url })))} />
                         </label>
                       </div>
                       <label className="block text-sm font-medium text-gray-700">Header Title</label>
@@ -1013,7 +1048,7 @@ export const Admin = () => {
                         />
                         <label className="cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                           <Upload className="w-5 h-5 text-gray-600" />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setInvolved({ ...involved, headerImage: url }))} />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setInvolved(prev => ({ ...prev, headerImage: url })))} />
                         </label>
                       </div>
                       <label className="block text-sm font-medium text-gray-700">Header Title</label>
@@ -1078,6 +1113,7 @@ export const Admin = () => {
                   <X className="w-6 h-6 text-red-600" />
                 </div>
                 <p className="font-semibold text-red-600">Upload Failed</p>
+                {uploadError && <p className="text-xs text-red-500 text-center mt-1">{uploadError}</p>}
               </>
             )}
           </div>
