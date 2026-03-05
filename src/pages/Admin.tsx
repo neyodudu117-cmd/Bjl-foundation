@@ -23,7 +23,7 @@ export const Admin = () => {
   const [gallery, setGallery] = useState<string[]>([]);
   const [gallerySection, setGallerySection] = useState({ title: '', subtitle: '' });
   const [newsSection, setNewsSection] = useState({ title: '', subtitle: '' });
-  const [settings, setSettings] = useState({ logo: '', favicon: '' });
+  const [settings, setSettings] = useState({ logo: '', favicon: '', backgroundColor: '#ffffff' });
   const [programs, setPrograms] = useState<Program[]>([]);
   const [stats, setStats] = useState<Stat[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -38,6 +38,8 @@ export const Admin = () => {
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+
+  const confirmSave = () => window.confirm('Are you sure you want to save these changes?');
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +134,8 @@ export const Admin = () => {
 
       setSettings(await fetchContentService('settings', {
         logo: '',
-        favicon: ''
+        favicon: '',
+        backgroundColor: '#ffffff'
       }));
     } catch (error) {
       console.error("Error fetching content:", error);
@@ -208,6 +211,7 @@ export const Admin = () => {
   };
 
   const handleSaveGeneral = async () => {
+    if (!confirmSave()) return;
     try {
       await Promise.all([
         saveContent('hero', hero, true),
@@ -396,6 +400,14 @@ export const Admin = () => {
                           <img src={settings.favicon} alt="Favicon Preview" className="h-8 w-8 object-contain" />
                         </div>
                       )}
+
+                      <label className="block text-sm font-medium text-gray-700 mt-2">Background Color</label>
+                      <input 
+                        type="color"
+                        className="w-full h-10 px-1 py-1 border rounded-lg outline-none focus:ring-2 focus:ring-brand-blue"
+                        value={settings.backgroundColor}
+                        onChange={(e) => setSettings({ ...settings, backgroundColor: e.target.value })}
+                      />
                     </div>
                   </div>
 
@@ -546,7 +558,7 @@ export const Admin = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Programs</h2>
                   <button 
-                    onClick={() => saveContent('programs', programs)}
+                    onClick={() => { if (confirmSave()) saveContent('programs', programs); }}
                     className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                   >
                     <Save className="w-4 h-4" /> Save All
@@ -625,7 +637,7 @@ export const Admin = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Impact Stats</h2>
                   <button 
-                    onClick={() => saveContent('stats', stats)}
+                    onClick={() => { if (confirmSave()) saveContent('stats', stats); }}
                     className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                   >
                     <Save className="w-4 h-4" /> Save All
@@ -675,7 +687,7 @@ export const Admin = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Testimonials</h2>
                   <button 
-                    onClick={() => saveContent('testimonials', testimonials)}
+                    onClick={() => { if (confirmSave()) saveContent('testimonials', testimonials); }}
                     className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                   >
                     <Save className="w-4 h-4" /> Save All
@@ -771,7 +783,7 @@ export const Admin = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Blog Posts</h2>
                   <button 
-                    onClick={() => saveContent('blogPosts', blogPosts)}
+                    onClick={() => { if (confirmSave()) saveContent('blogPosts', blogPosts); }}
                     className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                   >
                     <Save className="w-4 h-4" /> Save All
@@ -869,7 +881,7 @@ export const Admin = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Team Members</h2>
                   <button 
-                    onClick={() => saveContent('team', team)}
+                    onClick={() => { if (confirmSave()) saveContent('team', team); }}
                     className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                   >
                     <Save className="w-4 h-4" /> Save All
@@ -947,7 +959,7 @@ export const Admin = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Contact Information</h2>
                   <button 
-                    onClick={() => saveContent('contact', contact)}
+                    onClick={() => { if (confirmSave()) saveContent('contact', contact); }}
                     className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                   >
                     <Save className="w-4 h-4" /> Save Contact Info
@@ -1051,7 +1063,7 @@ export const Admin = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Get Involved Page Content</h2>
                   <button 
-                    onClick={() => saveContent('involved', involved)}
+                    onClick={() => { if (confirmSave()) saveContent('involved', involved); }}
                     className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                   >
                     <Save className="w-4 h-4" /> Save Involved Info
