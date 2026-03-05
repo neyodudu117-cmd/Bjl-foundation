@@ -87,33 +87,15 @@ async function startServer() {
   });
 
   // Upload API
-  const uploadMiddleware = upload.single("image");
-  
-  // Handle OPTIONS for CORS preflight (though typically not needed for same-origin)
-  app.options("/api/upload", (req, res) => {
-    res.sendStatus(200);
-  });
-
-  app.post("/api/upload", (req, res) => {
-    console.log("Processing upload request...");
-    uploadMiddleware(req, res, (err) => {
-      if (err instanceof multer.MulterError) {
-        console.error("Multer error:", err);
-        return res.status(400).json({ message: `Upload error: ${err.message}` });
-      } else if (err) {
-        console.error("Unknown upload error:", err);
-        return res.status(400).json({ message: `Upload error: ${err.message}` });
-      }
-
-      if (!req.file) {
-        console.error("No file in request");
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-      
-      const url = `/uploads/${req.file.filename}`;
-      console.log("Upload successful:", url);
-      res.json({ url });
-    });
+  app.post("/api/upload", upload.single("image"), (req, res) => {
+    if (!req.file) {
+      console.error("No file in request");
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    
+    const url = `/uploads/${req.file.filename}`;
+    console.log("Upload successful:", url);
+    res.json({ url });
   });
 
   // Debug route for other methods on /api/upload
