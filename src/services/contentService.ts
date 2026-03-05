@@ -35,14 +35,19 @@ export const fetchContent = async <T>(key: string, defaultValue: T): Promise<T> 
 
 export const saveContent = async <T>(key: string, data: T): Promise<void> => {
   try {
+    console.log(`Attempting to save ${key} to Firestore...`);
     const docRef = doc(db, 'content', key);
     // Firestore documents must be objects. If data is an array, wrap it.
     const payload = Array.isArray(data) ? { items: data } : data;
     // Sanitize payload to remove undefined values which Firestore rejects
     const sanitizedPayload = JSON.parse(JSON.stringify(payload));
     await setDoc(docRef, sanitizedPayload);
-  } catch (err) {
+    console.log(`Successfully saved ${key} to Firestore.`);
+  } catch (err: any) {
     console.error(`Failed to save ${key} to Firestore`, err);
+    if (err.code === 'permission-denied') {
+      console.error(`Permission denied for saving ${key}. Check Firestore rules.`);
+    }
     throw err;
   }
 };

@@ -189,6 +189,7 @@ export const Admin = () => {
       }
 
       const data = await response.json();
+      console.log('Upload successful, URL:', data.url);
       onUpload(data.url);
       addToast('Image uploaded successfully!', 'success');
     } catch (error: any) {
@@ -213,14 +214,26 @@ export const Admin = () => {
   const handleSaveGeneral = async () => {
     if (!confirmSave()) return;
     try {
-      await Promise.all([
-        saveContent('hero', hero, true),
-        saveContent('about', about, true),
-        saveContent('gallery', gallery, true),
-        saveContent('gallerySection', gallerySection, true),
-        saveContent('newsSection', newsSection, true),
-        saveContent('settings', settings, true)
-      ]);
+      console.log('Saving general settings...');
+      const tasks = [
+        { key: 'hero', value: hero },
+        { key: 'about', value: about },
+        { key: 'gallery', value: gallery },
+        { key: 'gallerySection', value: gallerySection },
+        { key: 'newsSection', value: newsSection },
+        { key: 'settings', value: settings }
+      ];
+      
+      await Promise.all(tasks.map(async (task) => {
+        try {
+          console.log(`Saving ${task.key}:`, task.value);
+          await saveContent(task.key, task.value, true);
+        } catch (err) {
+          console.error(`Error saving ${task.key}:`, err);
+          throw err;
+        }
+      }));
+      
       addToast('General settings saved successfully!', 'success');
     } catch (error) {
       console.error('Error saving general settings:', error);
