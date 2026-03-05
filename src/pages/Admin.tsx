@@ -3,6 +3,10 @@ import { motion } from 'framer-motion';
 import { LogIn, Save, Plus, Trash2, Edit2, Check, X, Upload, Image as ImageIcon, Users } from 'lucide-react';
 import { PROGRAMS, STATS, TESTIMONIALS, BLOG_POSTS } from '../constants';
 import { Program, Stat, Testimonial, BlogPost, TeamMember, ContactInfo, InvolvedContent } from '../types';
+import { auth, storage } from '../lib/firebase';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { fetchContent as fetchContentService, saveContent as saveContentService } from '../services/contentService';
 
 export const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -36,132 +40,81 @@ export const Admin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setIsLoggedIn(true);
-          localStorage.setItem('admin_user', JSON.stringify(data.user));
-          fetchContent();
-        } else {
-          setError(data.message);
-        }
-      } else {
-        throw new Error('Server error');
-      }
-    } catch (err) {
-      // Fallback for static hosting (Netlify)
-      if (username === 'admin' && password === 'admin123') {
-        setIsLoggedIn(true);
-        localStorage.setItem('admin_user', JSON.stringify({ username: 'admin' }));
-        fetchContent();
-      } else {
-        setError('Login failed. Please check your credentials.');
-      }
+      await signInWithEmailAndPassword(auth, username, password);
+    } catch (err: any) {
+      console.error(err);
+      setError('Login failed. Please check your credentials.');
     }
   };
 
   const fetchContent = async () => {
-    const keys = ['hero', 'about', 'programs', 'stats', 'testimonials', 'blogPosts', 'team', 'contact', 'involved', 'gallery', 'gallerySection', 'newsSection', 'settings'];
-    for (const key of keys) {
-      let data = null;
-      try {
-        const res = await fetch(`/api/content/${key}`);
-        if (res.ok) {
-          data = await res.json();
-        }
-      } catch (err) {
-        console.error(`Failed to fetch ${key}, checking local storage`, err);
-      }
+    setHero(await fetchContentService('hero', { 
+      title: 'Manifesting God’s Dominion Worldwide.', 
+      subtitle: 'To disciple nations by transforming societal structures through biblical principles.',
+      image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1920'
+    }));
+    
+    setAbout(await fetchContentService('about', {
+      title: 'Our Mission & Vision',
+      subtitle: 'Banji Lagunju Foundation works to manifest God’s dominion in all nations worldwide through the church.',
+      image: 'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=800'
+    }));
 
-      // Fallback to localStorage if API failed
-      if (!data) {
-        const localData = localStorage.getItem(`content_${key}`);
-        if (localData) {
-          data = JSON.parse(localData);
-        }
-      }
+    setPrograms(await fetchContentService('programs', PROGRAMS));
+    setStats(await fetchContentService('stats', STATS));
+    setTestimonials(await fetchContentService('testimonials', TESTIMONIALS));
+    setBlogPosts(await fetchContentService('blogPosts', BLOG_POSTS));
+    
+    setTeam(await fetchContentService('team', [
+      { id: '1', name: 'Banji Lagunju', role: 'Founder & Chairman', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400' },
+      { id: '2', name: 'Dr. Jane Smith', role: 'Executive Director', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=400' },
+      { id: '3', name: 'Robert Wilson', role: 'Head of Programs', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400' }
+    ]));
 
-      if (data) {
-        if (key === 'hero') setHero(data);
-        if (key === 'about') setAbout(data);
-        if (key === 'programs') setPrograms(data);
-        if (key === 'stats') setStats(data);
-        if (key === 'testimonials') setTestimonials(data);
-        if (key === 'blogPosts') setBlogPosts(data);
-        if (key === 'team') setTeam(data);
-        if (key === 'contact') setContact(data);
-        if (key === 'involved') setInvolved(data);
-        if (key === 'gallery') setGallery(data);
-        if (key === 'gallerySection') setGallerySection(data);
-        if (key === 'newsSection') setNewsSection(data);
-        if (key === 'settings') setSettings(data);
-      } else {
-        // If not found anywhere, use defaults from constants
-          if (key === 'hero') setHero({ 
-            title: 'Manifesting God’s Dominion Worldwide.', 
-            subtitle: 'To disciple nations by transforming societal structures through biblical principles.',
-            image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1920'
-          });
-          if (key === 'about') setAbout({
-            title: 'Our Mission & Vision',
-            subtitle: 'Banji Lagunju Foundation works to manifest God’s dominion in all nations worldwide through the church.',
-            image: 'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=800'
-          });
-          if (key === 'gallery') setGallery([
-            'https://images.unsplash.com/photo-1544427920-c49ccfb85579?auto=format&fit=crop&q=80&w=400',
-            'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=400',
-            'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400',
-            'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&q=80&w=400',
-            'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=400',
-            'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=400'
-          ]);
-          if (key === 'gallerySection') setGallerySection({
-            title: 'Our Gallery',
-            subtitle: 'Follow our journey and see the impact of our programs through our lens.'
-          });
-          if (key === 'newsSection') setNewsSection({
-            title: 'Latest News & Stories',
-            subtitle: 'Stay updated with our latest projects, success stories, and community updates.'
-          });
-          if (key === 'settings') setSettings({
-            logo: '',
-            favicon: ''
-          });
-          if (key === 'programs') setPrograms(PROGRAMS);
-          if (key === 'stats') setStats(STATS);
-          if (key === 'testimonials') setTestimonials(TESTIMONIALS);
-          if (key === 'blogPosts') setBlogPosts(BLOG_POSTS);
-          if (key === 'team') setTeam([
-            { id: '1', name: 'Banji Lagunju', role: 'Founder & Chairman', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400' },
-            { id: '2', name: 'Dr. Jane Smith', role: 'Executive Director', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=400' },
-            { id: '3', name: 'Robert Wilson', role: 'Head of Programs', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400' }
-          ]);
-          if (key === 'contact') setContact({
-            address: 'Grace Assembly City Church, Kampala, Uganda',
-            phone: '07066894652',
-            email: 'info@bjlfoundation.org',
-            facebook: 'https://facebook.com/bjlfoundation',
-            twitter: 'https://twitter.com/bjlfoundation',
-            instagram: 'https://instagram.com/bjl.foundation',
-            linkedin: 'https://linkedin.com/company/bjlfoundation',
-            headerImage: 'https://images.unsplash.com/photo-1523966211575-eb4a01e7dd51?auto=format&fit=crop&q=80&w=1920',
-            headerTitle: 'Contact Us',
-            headerSubtitle: "Have questions about our programs, partnerships, or volunteering? We'd love to hear from you."
-          });
-          if (key === 'involved') setInvolved({
-            headerImage: 'https://images.unsplash.com/photo-1559027615-cd26714e93af?auto=format&fit=crop&q=80&w=1920',
-            headerTitle: 'Get Involved',
-            headerSubtitle: 'There are many ways to support our mission. Join us in creating lasting change for communities in need.',
-            volunteerTitle: 'Become a Volunteer',
-            volunteerSubtitle: 'Ready to take the first step? Fill out the form and our volunteer coordinator will get in touch with you shortly.'
-          });
-      }
-    }
+    setContact(await fetchContentService('contact', {
+      address: 'Grace Assembly City Church, Kampala, Uganda',
+      phone: '07066894652',
+      email: 'info@bjlfoundation.org',
+      facebook: 'https://facebook.com/bjlfoundation',
+      twitter: 'https://twitter.com/bjlfoundation',
+      instagram: 'https://instagram.com/bjl.foundation',
+      linkedin: 'https://linkedin.com/company/bjlfoundation',
+      headerImage: 'https://images.unsplash.com/photo-1523966211575-eb4a01e7dd51?auto=format&fit=crop&q=80&w=1920',
+      headerTitle: 'Contact Us',
+      headerSubtitle: "Have questions about our programs, partnerships, or volunteering? We'd love to hear from you."
+    }));
+
+    setInvolved(await fetchContentService('involved', {
+      headerImage: 'https://images.unsplash.com/photo-1559027615-cd26714e93af?auto=format&fit=crop&q=80&w=1920',
+      headerTitle: 'Get Involved',
+      headerSubtitle: 'There are many ways to support our mission. Join us in creating lasting change for communities in need.',
+      volunteerTitle: 'Become a Volunteer',
+      volunteerSubtitle: 'Ready to take the first step? Fill out the form and our volunteer coordinator will get in touch with you shortly.'
+    }));
+
+    setGallery(await fetchContentService('gallery', [
+      'https://images.unsplash.com/photo-1544427920-c49ccfb85579?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1524069290683-0457abfe42c3?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=400'
+    ]));
+
+    setGallerySection(await fetchContentService('gallerySection', {
+      title: 'Our Gallery',
+      subtitle: 'Follow our journey and see the impact of our programs through our lens.'
+    }));
+
+    setNewsSection(await fetchContentService('newsSection', {
+      title: 'Latest News & Stories',
+      subtitle: 'Stay updated with our latest projects, success stories, and community updates.'
+    }));
+
+    setSettings(await fetchContentService('settings', {
+      logo: '',
+      favicon: ''
+    }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, onUpload: (url: string) => void) => {
@@ -170,87 +123,50 @@ export const Admin = () => {
 
     setUploadStatus('uploading');
     setUploadProgress(0);
-    
-    // Try API upload first
-    const formData = new FormData();
-    formData.append('image', file);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload', true);
+    const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        setUploadProgress(percentComplete);
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          onUpload(data.url);
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      },
+      (error) => {
+        console.error('Upload failed', error);
+        setUploadStatus('error');
+        setTimeout(() => setUploadStatus('idle'), 3000);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          onUpload(downloadURL);
           setUploadStatus('success');
           setTimeout(() => setUploadStatus('idle'), 2000);
-        } catch (e) {
-          fallbackToLocalFile(file, onUpload);
-        }
-      } else {
-        fallbackToLocalFile(file, onUpload);
+        });
       }
-    };
-
-    xhr.onerror = () => {
-      fallbackToLocalFile(file, onUpload);
-    };
-
-    xhr.send(formData);
-  };
-
-  const fallbackToLocalFile = (file: File, onUpload: (url: string) => void) => {
-    // Fallback to Base64 for static hosting
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        onUpload(result);
-        setUploadStatus('success');
-        setTimeout(() => setUploadStatus('idle'), 2000);
-      }
-    };
-    reader.onerror = () => {
-      setUploadStatus('error');
-      setTimeout(() => setUploadStatus('idle'), 3000);
-    };
-    reader.readAsDataURL(file);
+    );
   };
 
   const saveContent = async (key: string, value: any) => {
     try {
-      const res = await fetch(`/api/content/${key}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value }),
-      });
-      if (!res.ok) throw new Error('API failed');
+      await saveContentService(key, value);
       alert('Saved successfully!');
     } catch (err) {
-      // Fallback to localStorage
-      try {
-        localStorage.setItem(`content_${key}`, JSON.stringify(value));
-        alert('Saved locally! (Note: Changes are only visible in this browser)');
-      } catch (e) {
-        alert('Failed to save');
-      }
+      console.error(err);
+      alert('Failed to save');
     }
   };
 
   useEffect(() => {
-    const user = localStorage.getItem('admin_user');
-    if (user) {
-      setIsLoggedIn(true);
-      fetchContent();
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        fetchContent();
+      } else {
+        setIsLoggedIn(false);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   if (!isLoggedIn) {

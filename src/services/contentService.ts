@@ -1,43 +1,30 @@
 import React from 'react';
-import { PROGRAMS, STATS, TESTIMONIALS, BLOG_POSTS } from '../constants';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-
-const COLLECTION_NAME = 'content';
 
 export const fetchContent = async <T>(key: string, defaultValue: T): Promise<T> => {
-  // Try Firebase Firestore first
   try {
-    const docRef = doc(db, COLLECTION_NAME, key);
+    const docRef = doc(db, 'content', key);
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data().value as T;
-    }
-  } catch (err) {
-    console.error(`Failed to fetch ${key} from Firebase, checking local storage`, err);
-  }
 
-  // Fallback to API (if backend exists)
-  try {
-    const res = await fetch(`/api/content/${key}`);
-    if (res.ok) {
-      return await res.json();
+    if (docSnap.exists()) {
+      return docSnap.data() as T;
     }
   } catch (err) {
-    // API failed, ignore
-  }
-  
-  // Fallback to localStorage
-  try {
-    const localData = localStorage.getItem(`content_${key}`);
-    if (localData) {
-      return JSON.parse(localData);
-    }
-  } catch (err) {
-    console.error(`Failed to load ${key} from local storage`, err);
+    console.error(`Failed to fetch ${key} from Firestore`, err);
   }
 
   return defaultValue;
+};
+
+export const saveContent = async <T>(key: string, data: T): Promise<void> => {
+  try {
+    const docRef = doc(db, 'content', key);
+    await setDoc(docRef, data as any);
+  } catch (err) {
+    console.error(`Failed to save ${key} to Firestore`, err);
+    throw err;
+  }
 };
 
 export const useContent = <T>(key: string, defaultValue: T): T => {
