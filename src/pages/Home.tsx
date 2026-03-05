@@ -70,7 +70,7 @@ export const Home = ({ setCurrentPage }: { setCurrentPage: (page: Page) => void 
               transition={{ delay: 0.3 }}
               className="inline-block px-4 py-1.5 bg-brand-gold text-brand-blue rounded-full text-xs font-bold uppercase tracking-widest mb-6"
             >
-              Banji Lagunju Foundation
+              BJL Foundation
             </motion.span>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               {hero.title}

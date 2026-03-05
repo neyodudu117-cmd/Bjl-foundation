@@ -23,12 +23,12 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (page: Page) => voi
         {/* Branding */}
         <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-brand-gold rounded-xl flex items-center justify-center">
-              <Heart className="w-6 h-6 text-brand-blue" />
+            <div className="w-10 h-10 bg-brand-gold rounded-xl flex items-center justify-center overflow-hidden">
+              <img src="/favicon.svg" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <span className="block text-xl font-bold leading-none">BANJI LAGUNJU FOUNDATION</span>
-              <span className="text-[10px] font-bold tracking-[0.2em] text-brand-gold uppercase">Empowering Lives</span>
+              <span className="block text-xl font-bold leading-none">BJL FOUNDATION</span>
+              <span className="text-[8px] font-bold tracking-[0.1em] text-brand-gold uppercase block mt-1">Setting the Stage for a Brighter Tomorrow</span>
             </div>
           </div>
           <p className="text-white/60 leading-relaxed">
@@ -116,7 +116,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (page: Page) => voi
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/40">
-        <p>© 2024 Banji Lagunju Foundation. All rights reserved.</p>
+        <p>© 2024 BJL Foundation. All rights reserved.</p>
         <div className="flex items-center gap-6">
           <button onClick={() => setCurrentPage('admin')} className="hover:text-brand-gold transition-colors">Admin</button>
           <button onClick={() => setCurrentPage('about')} className="hover:text-brand-gold transition-colors">Privacy Policy</button>

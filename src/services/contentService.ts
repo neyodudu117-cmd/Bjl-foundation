@@ -1,14 +1,30 @@
 import React from 'react';
 import { PROGRAMS, STATS, TESTIMONIALS, BLOG_POSTS } from '../constants';
+import { db } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+const COLLECTION_NAME = 'content';
 
 export const fetchContent = async <T>(key: string, defaultValue: T): Promise<T> => {
+  // Try Firebase Firestore first
+  try {
+    const docRef = doc(db, COLLECTION_NAME, key);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().value as T;
+    }
+  } catch (err) {
+    console.error(`Failed to fetch ${key} from Firebase, checking local storage`, err);
+  }
+
+  // Fallback to API (if backend exists)
   try {
     const res = await fetch(`/api/content/${key}`);
     if (res.ok) {
       return await res.json();
     }
   } catch (err) {
-    console.error(`Failed to fetch ${key}, falling back to local storage`, err);
+    // API failed, ignore
   }
   
   // Fallback to localStorage

@@ -60,15 +60,15 @@ export const Navbar = ({
             <img src={settings.logo} alt="BJL Foundation" className="h-12 w-auto object-contain" />
           ) : (
             <>
-              <div className="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center group-hover:bg-brand-gold transition-colors">
-                <Heart className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center group-hover:bg-brand-gold transition-colors overflow-hidden">
+                <img src="/favicon.svg" alt="Logo" className="w-full h-full object-cover" />
               </div>
               <div className="text-left">
                 <span className={cn(
                   "block text-xl font-bold leading-none",
                   isScrolled ? "text-brand-blue" : "text-brand-blue"
-                )}>BANJI LAGUNJU FOUNDATION</span>
-                <span className="text-[10px] font-bold tracking-[0.2em] text-brand-gold uppercase">Empowering Lives</span>
+                )}>BJL FOUNDATION</span>
+                <span className="text-[8px] font-bold tracking-[0.1em] text-brand-gold uppercase block mt-1">Setting the Stage for a Brighter Tomorrow</span>
               </div>
             </>
           )}
