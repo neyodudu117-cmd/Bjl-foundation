@@ -8,8 +8,19 @@ export const fetchContent = async <T>(key: string, defaultValue: T): Promise<T> 
       return await res.json();
     }
   } catch (err) {
-    console.error(`Failed to fetch ${key}`, err);
+    console.error(`Failed to fetch ${key}, falling back to local storage`, err);
   }
+  
+  // Fallback to localStorage
+  try {
+    const localData = localStorage.getItem(`content_${key}`);
+    if (localData) {
+      return JSON.parse(localData);
+    }
+  } catch (err) {
+    console.error(`Failed to load ${key} from local storage`, err);
+  }
+
   return defaultValue;
 };
 

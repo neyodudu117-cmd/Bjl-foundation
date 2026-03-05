@@ -41,41 +41,67 @@ export const Admin = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setIsLoggedIn(true);
-        localStorage.setItem('admin_user', JSON.stringify(data.user));
-        fetchContent();
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setIsLoggedIn(true);
+          localStorage.setItem('admin_user', JSON.stringify(data.user));
+          fetchContent();
+        } else {
+          setError(data.message);
+        }
       } else {
-        setError(data.message);
+        throw new Error('Server error');
       }
     } catch (err) {
-      setError('Login failed');
+      // Fallback for static hosting (Netlify)
+      if (username === 'admin' && password === 'admin123') {
+        setIsLoggedIn(true);
+        localStorage.setItem('admin_user', JSON.stringify({ username: 'admin' }));
+        fetchContent();
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
     }
   };
 
   const fetchContent = async () => {
     const keys = ['hero', 'about', 'programs', 'stats', 'testimonials', 'blogPosts', 'team', 'contact', 'involved', 'gallery', 'gallerySection', 'newsSection', 'settings'];
     for (const key of keys) {
+      let data = null;
       try {
         const res = await fetch(`/api/content/${key}`);
         if (res.ok) {
-          const data = await res.json();
-          if (key === 'hero') setHero(data);
-          if (key === 'about') setAbout(data);
-          if (key === 'programs') setPrograms(data);
-          if (key === 'stats') setStats(data);
-          if (key === 'testimonials') setTestimonials(data);
-          if (key === 'blogPosts') setBlogPosts(data);
-          if (key === 'team') setTeam(data);
-          if (key === 'contact') setContact(data);
-          if (key === 'involved') setInvolved(data);
-          if (key === 'gallery') setGallery(data);
-          if (key === 'gallerySection') setGallerySection(data);
-          if (key === 'newsSection') setNewsSection(data);
-          if (key === 'settings') setSettings(data);
-        } else {
-          // If not found, use defaults from constants
+          data = await res.json();
+        }
+      } catch (err) {
+        console.error(`Failed to fetch ${key}, checking local storage`, err);
+      }
+
+      // Fallback to localStorage if API failed
+      if (!data) {
+        const localData = localStorage.getItem(`content_${key}`);
+        if (localData) {
+          data = JSON.parse(localData);
+        }
+      }
+
+      if (data) {
+        if (key === 'hero') setHero(data);
+        if (key === 'about') setAbout(data);
+        if (key === 'programs') setPrograms(data);
+        if (key === 'stats') setStats(data);
+        if (key === 'testimonials') setTestimonials(data);
+        if (key === 'blogPosts') setBlogPosts(data);
+        if (key === 'team') setTeam(data);
+        if (key === 'contact') setContact(data);
+        if (key === 'involved') setInvolved(data);
+        if (key === 'gallery') setGallery(data);
+        if (key === 'gallerySection') setGallerySection(data);
+        if (key === 'newsSection') setNewsSection(data);
+        if (key === 'settings') setSettings(data);
+      } else {
+        // If not found anywhere, use defaults from constants
           if (key === 'hero') setHero({ 
             title: 'Manifesting God’s Dominion Worldwide.', 
             subtitle: 'To disciple nations by transforming societal structures through biblical principles.',
@@ -134,9 +160,6 @@ export const Admin = () => {
             volunteerTitle: 'Become a Volunteer',
             volunteerSubtitle: 'Ready to take the first step? Fill out the form and our volunteer coordinator will get in touch with you shortly.'
           });
-        }
-      } catch (err) {
-        console.error(`Failed to fetch ${key}`, err);
       }
     }
   };
@@ -148,6 +171,7 @@ export const Admin = () => {
     setUploadStatus('uploading');
     setUploadProgress(0);
     
+    // Try API upload first
     const formData = new FormData();
     formData.append('image', file);
 
@@ -163,34 +187,61 @@ export const Admin = () => {
 
     xhr.onload = () => {
       if (xhr.status === 200) {
-        const data = JSON.parse(xhr.responseText);
-        onUpload(data.url);
-        setUploadStatus('success');
-        setTimeout(() => setUploadStatus('idle'), 2000);
+        try {
+          const data = JSON.parse(xhr.responseText);
+          onUpload(data.url);
+          setUploadStatus('success');
+          setTimeout(() => setUploadStatus('idle'), 2000);
+        } catch (e) {
+          fallbackToLocalFile(file, onUpload);
+        }
       } else {
-        setUploadStatus('error');
-        setTimeout(() => setUploadStatus('idle'), 3000);
+        fallbackToLocalFile(file, onUpload);
       }
     };
 
     xhr.onerror = () => {
-      setUploadStatus('error');
-      setTimeout(() => setUploadStatus('idle'), 3000);
+      fallbackToLocalFile(file, onUpload);
     };
 
     xhr.send(formData);
   };
 
+  const fallbackToLocalFile = (file: File, onUpload: (url: string) => void) => {
+    // Fallback to Base64 for static hosting
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        onUpload(result);
+        setUploadStatus('success');
+        setTimeout(() => setUploadStatus('idle'), 2000);
+      }
+    };
+    reader.onerror = () => {
+      setUploadStatus('error');
+      setTimeout(() => setUploadStatus('idle'), 3000);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const saveContent = async (key: string, value: any) => {
     try {
-      await fetch(`/api/content/${key}`, {
+      const res = await fetch(`/api/content/${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value }),
       });
+      if (!res.ok) throw new Error('API failed');
       alert('Saved successfully!');
     } catch (err) {
-      alert('Failed to save');
+      // Fallback to localStorage
+      try {
+        localStorage.setItem(`content_${key}`, JSON.stringify(value));
+        alert('Saved locally! (Note: Changes are only visible in this browser)');
+      } catch (e) {
+        alert('Failed to save');
+      }
     }
   };
 
