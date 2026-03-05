@@ -88,6 +88,7 @@ async function startServer() {
 
   // Upload API
   app.post("/api/upload", upload.single("image"), (req, res) => {
+    console.log("Received POST request to /api/upload");
     if (!req.file) {
       console.error("No file in request");
       return res.status(400).json({ message: "No file uploaded" });
