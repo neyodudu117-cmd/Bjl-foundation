@@ -33,7 +33,9 @@ export const saveContent = async <T>(key: string, data: T): Promise<void> => {
     const docRef = doc(db, 'content', key);
     // Firestore documents must be objects. If data is an array, wrap it.
     const payload = Array.isArray(data) ? { items: data } : data;
-    await setDoc(docRef, payload as any);
+    // Sanitize payload to remove undefined values which Firestore rejects
+    const sanitizedPayload = JSON.parse(JSON.stringify(payload));
+    await setDoc(docRef, sanitizedPayload);
   } catch (err) {
     console.error(`Failed to save ${key} to Firestore`, err);
     throw err;

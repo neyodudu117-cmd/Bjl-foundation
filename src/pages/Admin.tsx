@@ -187,9 +187,7 @@ export const Admin = () => {
 
   const saveContent = async (key: string, value: any, silent = false) => {
     try {
-      // Sanitize value to remove undefined properties which Firestore rejects
-      const sanitizedValue = JSON.parse(JSON.stringify(value));
-      await saveContentService(key, sanitizedValue);
+      await saveContentService(key, value);
       if (!silent) alert('Saved successfully!');
     } catch (err) {
       console.error(err);
