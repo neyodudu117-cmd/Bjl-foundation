@@ -148,9 +148,23 @@ export const Admin = () => {
     // Reset input value to allow selecting the same file again
     e.target.value = '';
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    // Check file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon'];
+    if (!validTypes.includes(file.type)) {
       setUploadStatus('error');
-      setUploadError('File size exceeds 10MB limit.');
+      setUploadError('Invalid file type. Please upload an image (JPG, PNG, GIF, WEBP, SVG, ICO).');
+      setTimeout(() => {
+        setUploadStatus('idle');
+        setUploadError('');
+      }, 5000);
+      return;
+    }
+
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setUploadStatus('error');
+      setUploadError(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum allowed size is 10MB.`);
       setTimeout(() => {
         setUploadStatus('idle');
         setUploadError('');
@@ -172,8 +186,15 @@ export const Admin = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
+        let errorMessage = 'Upload failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use default error message
+          errorMessage = `Upload failed with status: ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -184,7 +205,7 @@ export const Admin = () => {
     } catch (error: any) {
       console.error('Upload failed', error);
       setUploadStatus('error');
-      setUploadError(error.message || 'Upload failed');
+      setUploadError(error.message || 'An unexpected error occurred during upload.');
       setTimeout(() => {
         setUploadStatus('idle');
         setUploadError('');

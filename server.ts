@@ -56,7 +56,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     // Accept images only
     if (!file.originalname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico)$/i)) {
-      return cb(new Error("Only image files are allowed!"), false);
+      return cb(new Error("Only image files are allowed!"));
     }
     cb(null, true);
   },
