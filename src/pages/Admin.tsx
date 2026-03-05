@@ -4,12 +4,13 @@ import { LogIn, Save, Plus, Trash2, Edit2, Check, X, Upload, Image as ImageIcon,
 import { PROGRAMS, STATS, TESTIMONIALS, BLOG_POSTS } from '../constants';
 import { Program, Stat, Testimonial, BlogPost, TeamMember, ContactInfo, InvolvedContent } from '../types';
 import { auth, storage } from '../lib/firebase';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { fetchContent as fetchContentService, saveContent as saveContentService } from '../services/contentService';
 
 export const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -37,13 +38,28 @@ export const Admin = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
-      await signInWithEmailAndPassword(auth, username, password);
+      if (isRegistering) {
+        await createUserWithEmailAndPassword(auth, username, password);
+      } else {
+        await signInWithEmailAndPassword(auth, username, password);
+      }
     } catch (err: any) {
       console.error(err);
-      setError('Login failed. Please check your credentials.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email already in use. Please login.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password should be at least 6 characters.');
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('Invalid email or password.');
+      } else {
+        setError('Authentication failed. Please try again.');
+      }
     }
   };
 
@@ -181,18 +197,19 @@ export const Admin = () => {
             <div className="p-3 bg-brand-blue/10 rounded-lg">
               <LogIn className="w-6 h-6 text-brand-blue" />
             </div>
-            <h1 className="text-2xl font-bold text-brand-blue">Admin Login</h1>
+            <h1 className="text-2xl font-bold text-brand-blue">{isRegistering ? 'Create Admin Account' : 'Admin Login'}</h1>
           </div>
           
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
               <input 
-                type="text" 
+                type="email" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none"
-                placeholder="admin"
+                placeholder="admin@example.com"
+                required
               />
             </div>
             <div>
@@ -203,6 +220,8 @@ export const Admin = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none"
                 placeholder="••••••••"
+                required
+                minLength={6}
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -210,8 +229,21 @@ export const Admin = () => {
               type="submit"
               className="w-full bg-brand-blue text-white py-3 rounded-lg font-semibold hover:bg-brand-blue/90 transition-colors"
             >
-              Login
+              {isRegistering ? 'Create Account' : 'Login'}
             </button>
+            
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
+                  setError('');
+                }}
+                className="text-sm text-brand-blue hover:underline"
+              >
+                {isRegistering ? 'Already have an account? Login' : 'Need an account? Create one'}
+              </button>
+            </div>
           </form>
         </motion.div>
       </div>
