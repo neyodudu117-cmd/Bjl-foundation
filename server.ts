@@ -72,6 +72,22 @@ async function startServer() {
     next();
   });
 
+  // Upload API
+  app.post("/api/upload", (req, res, next) => {
+    console.log("Received request to /api/upload");
+    next();
+  }, upload.single("image"), (req, res) => {
+    console.log("Received POST request to /api/upload");
+    if (!req.file) {
+      console.error("No file in request");
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    
+    const url = `/uploads/${req.file.filename}`;
+    console.log("Upload successful:", url);
+    res.json({ url });
+  });
+
   app.use(express.json());
   app.use("/uploads", express.static(uploadsDir));
 
@@ -84,19 +100,6 @@ async function startServer() {
     } else {
       res.status(401).json({ success: false, message: "Invalid credentials" });
     }
-  });
-
-  // Upload API
-  app.post("/api/upload", upload.single("image"), (req, res) => {
-    console.log("Received POST request to /api/upload");
-    if (!req.file) {
-      console.error("No file in request");
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-    
-    const url = `/uploads/${req.file.filename}`;
-    console.log("Upload successful:", url);
-    res.json({ url });
   });
 
   // Content API
