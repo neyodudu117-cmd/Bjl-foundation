@@ -13,6 +13,12 @@ export const fetchContent = async <T>(key: string, defaultValue: T): Promise<T> 
       if (Array.isArray(defaultValue) && data.items && Array.isArray(data.items)) {
         return data.items as T;
       }
+      
+      // If defaultValue is an object, merge data with it to ensure no missing keys
+      if (defaultValue && typeof defaultValue === 'object' && !Array.isArray(defaultValue)) {
+        return { ...defaultValue, ...data } as T;
+      }
+
       return data as T;
     }
   } catch (err) {

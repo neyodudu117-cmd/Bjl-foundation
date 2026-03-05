@@ -185,13 +185,33 @@ export const Admin = () => {
     );
   };
 
-  const saveContent = async (key: string, value: any) => {
+  const saveContent = async (key: string, value: any, silent = false) => {
     try {
-      await saveContentService(key, value);
-      alert('Saved successfully!');
+      // Sanitize value to remove undefined properties which Firestore rejects
+      const sanitizedValue = JSON.parse(JSON.stringify(value));
+      await saveContentService(key, sanitizedValue);
+      if (!silent) alert('Saved successfully!');
     } catch (err) {
       console.error(err);
-      alert('Failed to save');
+      if (!silent) alert('Failed to save');
+      throw err;
+    }
+  };
+
+  const handleSaveGeneral = async () => {
+    try {
+      await Promise.all([
+        saveContent('hero', hero, true),
+        saveContent('about', about, true),
+        saveContent('gallery', gallery, true),
+        saveContent('gallerySection', gallerySection, true),
+        saveContent('newsSection', newsSection, true),
+        saveContent('settings', settings, true)
+      ]);
+      alert('General settings saved successfully!');
+    } catch (error) {
+      console.error('Error saving general settings:', error);
+      alert('Failed to save general settings. Please check your internet connection and try again.');
     }
   };
 
@@ -318,14 +338,7 @@ export const Admin = () => {
                   <h2 className="text-xl font-semibold">General Settings</h2>
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => {
-                        saveContent('hero', hero);
-                        saveContent('about', about);
-                        saveContent('gallery', gallery);
-                        saveContent('gallerySection', gallerySection);
-                        saveContent('newsSection', newsSection);
-                        saveContent('settings', settings);
-                      }}
+                      onClick={handleSaveGeneral}
                       className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90"
                     >
                       <Save className="w-4 h-4" /> Save General
