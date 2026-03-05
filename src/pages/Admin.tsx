@@ -87,7 +87,7 @@ export const Admin = () => {
       setBlogPosts(await fetchContentService('blogPosts', BLOG_POSTS));
       
       setTeam(await fetchContentService('team', [
-        { id: '1', name: 'Banji Lagunju', role: 'Founder & Chairman', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400' },
+        { id: '1', name: 'Banji Lagunju', role: 'Founder & Chairman', image: 'https://image2url.com/r2/default/images/1772748683903-d59e5028-9f15-445c-8968-fa61d2e9d3e3.jpeg' },
         { id: '2', name: 'Dr. Jane Smith', role: 'Executive Director', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=400' },
         { id: '3', name: 'Robert Wilson', role: 'Head of Programs', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400' }
       ]));
