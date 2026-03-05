@@ -146,43 +146,66 @@ export const Admin = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset input value to allow selecting the same file again
+    e.target.value = '';
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      setUploadStatus('error');
+      setUploadError('File size exceeds 10MB limit.');
+      setTimeout(() => {
+        setUploadStatus('idle');
+        setUploadError('');
+      }, 5000);
+      return;
+    }
+
     setUploadStatus('uploading');
     setUploadProgress(0);
     setUploadError('');
 
-    const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-    uploadTask.on('state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadProgress(progress);
-      },
-      (error) => {
-        console.error('Upload failed', error);
-        setUploadStatus('error');
-        setUploadError(error.message);
-        setTimeout(() => {
-          setUploadStatus('idle');
-          setUploadError('');
-        }, 5000);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          onUpload(downloadURL);
-          setUploadStatus('success');
-          setTimeout(() => setUploadStatus('idle'), 2000);
-        }).catch((error) => {
-          console.error('Failed to get download URL', error);
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          console.error('Upload failed', error);
           setUploadStatus('error');
-          setUploadError('Failed to get download URL');
+          setUploadError(error.message || 'Upload failed');
           setTimeout(() => {
             setUploadStatus('idle');
             setUploadError('');
           }, 5000);
-        });
-      }
-    );
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            onUpload(downloadURL);
+            setUploadStatus('success');
+            setTimeout(() => setUploadStatus('idle'), 2000);
+          }).catch((error) => {
+            console.error('Failed to get download URL', error);
+            setUploadStatus('error');
+            setUploadError('Failed to get download URL');
+            setTimeout(() => {
+              setUploadStatus('idle');
+              setUploadError('');
+            }, 5000);
+          });
+        }
+      );
+    } catch (error: any) {
+      console.error('Error initiating upload:', error);
+      setUploadStatus('error');
+      setUploadError(error.message || 'Failed to start upload');
+      setTimeout(() => {
+        setUploadStatus('idle');
+        setUploadError('');
+      }, 5000);
+    }
   };
 
   const saveContent = async (key: string, value: any, silent = false) => {
@@ -1107,7 +1130,7 @@ export const Admin = () => {
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div className="bg-brand-blue h-2.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
                 </div>
-                <p className="font-semibold text-brand-blue">Uploading... {uploadProgress}%</p>
+                <p className="font-semibold text-brand-blue">Uploading... {Math.round(uploadProgress)}%</p>
               </>
             )}
             {uploadStatus === 'success' && (

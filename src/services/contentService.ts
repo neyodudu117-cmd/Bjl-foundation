@@ -1,6 +1,7 @@
 import React from 'react';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '../lib/firebase';
 
 export const fetchContent = async <T>(key: string, defaultValue: T): Promise<T> => {
   try {
@@ -21,8 +22,12 @@ export const fetchContent = async <T>(key: string, defaultValue: T): Promise<T> 
 
       return data as T;
     }
-  } catch (err) {
-    console.error(`Failed to fetch ${key} from Firestore`, err);
+  } catch (err: any) {
+    if (err.code === 'permission-denied') {
+      console.warn(`Permission denied for ${key}. Using default value. Check Firestore rules.`);
+    } else {
+      console.error(`Failed to fetch ${key} from Firestore`, err);
+    }
   }
 
   return defaultValue;
@@ -44,6 +49,14 @@ export const saveContent = async <T>(key: string, data: T): Promise<void> => {
 
 export const useContent = <T>(key: string, defaultValue: T): T => {
   const [content, setContent] = React.useState<T>(defaultValue);
+  const [user, setUser] = React.useState(auth.currentUser);
+
+  React.useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsubscribeAuth();
+  }, []);
 
   React.useEffect(() => {
     const docRef = doc(db, 'content', key);
@@ -60,11 +73,17 @@ export const useContent = <T>(key: string, defaultValue: T): T => {
         setContent(defaultValue);
       }
     }, (error) => {
-      console.error(`Failed to subscribe to ${key}`, error);
+      if (error.code === 'permission-denied') {
+        // Suppress loud error for permission denied, as it might be expected for public users
+        // depending on rules. We just stick to default value.
+        console.warn(`Permission denied for ${key}. Using default value.`);
+      } else {
+        console.error(`Failed to subscribe to ${key}`, error);
+      }
     });
 
     return () => unsubscribe();
-  }, [key]); // Remove defaultValue from dependency array to avoid infinite loops if defaultValue is an object literal
+  }, [key, user]); // Re-subscribe when user changes
 
   return content;
 };
