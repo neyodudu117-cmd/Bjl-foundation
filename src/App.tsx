@@ -15,6 +15,7 @@ import { Blog } from './pages/Blog';
 import { Contact } from './pages/Contact';
 import { Admin } from './pages/Admin';
 import { Page } from './types';
+import { ToastProvider } from './components/Toast';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -46,25 +47,27 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-brand-gold selection:text-brand-blue">
-      <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-      
-      <main className="flex-grow">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderPage()}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+    <ToastProvider>
+      <div className="min-h-screen flex flex-col selection:bg-brand-gold selection:text-brand-blue">
+        <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+        
+        <main className="flex-grow">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderPage()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
 
-      <Footer setCurrentPage={setCurrentPage} />
-    </div>
+        <Footer setCurrentPage={setCurrentPage} />
+      </div>
+    </ToastProvider>
   );
 }
 

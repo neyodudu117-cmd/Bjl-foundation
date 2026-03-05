@@ -10,9 +10,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "uploads");
+const uploadsDir = path.resolve(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 const db = new Database("data.db");
@@ -40,7 +40,7 @@ if (!adminExists) {
 // Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -66,6 +66,12 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Logging middleware
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+  });
+
   app.use(express.json());
   app.use("/uploads", express.static(uploadsDir));
 
@@ -82,23 +88,38 @@ async function startServer() {
 
   // Upload API
   const uploadMiddleware = upload.single("image");
+  
+  // Handle OPTIONS for CORS preflight (though typically not needed for same-origin)
+  app.options("/api/upload", (req, res) => {
+    res.sendStatus(200);
+  });
+
   app.post("/api/upload", (req, res) => {
+    console.log("Processing upload request...");
     uploadMiddleware(req, res, (err) => {
       if (err instanceof multer.MulterError) {
-        // A Multer error occurred when uploading.
+        console.error("Multer error:", err);
         return res.status(400).json({ message: `Upload error: ${err.message}` });
       } else if (err) {
-        // An unknown error occurred when uploading.
+        console.error("Unknown upload error:", err);
         return res.status(400).json({ message: `Upload error: ${err.message}` });
       }
 
       if (!req.file) {
+        console.error("No file in request");
         return res.status(400).json({ message: "No file uploaded" });
       }
       
       const url = `/uploads/${req.file.filename}`;
+      console.log("Upload successful:", url);
       res.json({ url });
     });
+  });
+
+  // Debug route for other methods on /api/upload
+  app.all("/api/upload", (req, res) => {
+    console.log(`Method ${req.method} not allowed on /api/upload`);
+    res.status(405).json({ message: "Method Not Allowed. Use POST." });
   });
 
   // Content API

@@ -6,8 +6,10 @@ import { Program, Stat, Testimonial, BlogPost, TeamMember, ContactInfo, Involved
 import { auth } from '../lib/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { fetchContent as fetchContentService, saveContent as saveContentService } from '../services/contentService';
+import { useToast } from '../components/Toast';
 
 export const Admin = () => {
+  const { addToast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
@@ -34,9 +36,7 @@ export const Admin = () => {
   const [involved, setInvolved] = useState<InvolvedContent>({
     headerImage: '', headerTitle: '', headerSubtitle: '', volunteerTitle: '', volunteerSubtitle: ''
   });
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
-  const [uploadError, setUploadError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -151,30 +151,19 @@ export const Admin = () => {
     // Check file type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon'];
     if (!validTypes.includes(file.type)) {
-      setUploadStatus('error');
-      setUploadError('Invalid file type. Please upload an image (JPG, PNG, GIF, WEBP, SVG, ICO).');
-      setTimeout(() => {
-        setUploadStatus('idle');
-        setUploadError('');
-      }, 5000);
+      addToast('Invalid file type. Please upload an image (JPG, PNG, GIF, WEBP, SVG, ICO).', 'error');
       return;
     }
 
     // Check file size (10MB limit)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      setUploadStatus('error');
-      setUploadError(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum allowed size is 10MB.`);
-      setTimeout(() => {
-        setUploadStatus('idle');
-        setUploadError('');
-      }, 5000);
+      addToast(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum allowed size is 10MB.`, 'error');
       return;
     }
 
-    setUploadStatus('uploading');
-    setUploadProgress(0);
-    setUploadError('');
+    setIsUploading(true);
+    addToast('Uploading image...', 'info');
 
     const formData = new FormData();
     formData.append('image', file);
@@ -191,7 +180,6 @@ export const Admin = () => {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
         } catch (e) {
-          // If response is not JSON, use default error message
           errorMessage = `Upload failed with status: ${response.status}`;
         }
         throw new Error(errorMessage);
@@ -199,27 +187,22 @@ export const Admin = () => {
 
       const data = await response.json();
       onUpload(data.url);
-      setUploadStatus('success');
-      setUploadProgress(100);
-      setTimeout(() => setUploadStatus('idle'), 2000);
+      addToast('Image uploaded successfully!', 'success');
     } catch (error: any) {
       console.error('Upload failed', error);
-      setUploadStatus('error');
-      setUploadError(error.message || 'An unexpected error occurred during upload.');
-      setTimeout(() => {
-        setUploadStatus('idle');
-        setUploadError('');
-      }, 5000);
+      addToast(error.message || 'An unexpected error occurred during upload.', 'error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const saveContent = async (key: string, value: any, silent = false) => {
     try {
       await saveContentService(key, value);
-      if (!silent) alert('Saved successfully!');
+      if (!silent) addToast('Saved successfully!', 'success');
     } catch (err) {
       console.error(err);
-      if (!silent) alert('Failed to save');
+      if (!silent) addToast('Failed to save', 'error');
       throw err;
     }
   };
@@ -234,10 +217,10 @@ export const Admin = () => {
         saveContent('newsSection', newsSection, true),
         saveContent('settings', settings, true)
       ]);
-      alert('General settings saved successfully!');
+      addToast('General settings saved successfully!', 'success');
     } catch (error) {
       console.error('Error saving general settings:', error);
-      alert('Failed to save general settings. Please check your internet connection and try again.');
+      addToast('Failed to save general settings.', 'error');
     }
   };
 
@@ -1127,37 +1110,6 @@ export const Admin = () => {
           </div>
         </div>
       </div>
-      {uploadStatus !== 'idle' && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
-          <div className="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 w-64">
-            {uploadStatus === 'uploading' && (
-              <>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-brand-blue h-2.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
-                </div>
-                <p className="font-semibold text-brand-blue">Uploading... {Math.round(uploadProgress)}%</p>
-              </>
-            )}
-            {uploadStatus === 'success' && (
-              <>
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Check className="w-6 h-6 text-green-600" />
-                </div>
-                <p className="font-semibold text-green-600">Upload Complete!</p>
-              </>
-            )}
-            {uploadStatus === 'error' && (
-              <>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <X className="w-6 h-6 text-red-600" />
-                </div>
-                <p className="font-semibold text-red-600">Upload Failed</p>
-                {uploadError && <p className="text-xs text-red-500 text-center mt-1">{uploadError}</p>}
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
