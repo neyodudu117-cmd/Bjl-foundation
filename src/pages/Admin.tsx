@@ -3,9 +3,8 @@ import { motion } from 'framer-motion';
 import { LogIn, Save, Plus, Trash2, Edit2, Check, X, Upload, Image as ImageIcon, Users } from 'lucide-react';
 import { PROGRAMS, STATS, TESTIMONIALS, BLOG_POSTS } from '../constants';
 import { Program, Stat, Testimonial, BlogPost, TeamMember, ContactInfo, InvolvedContent } from '../types';
-import { auth, storage } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { fetchContent as fetchContentService, saveContent as saveContentService } from '../services/contentService';
 
 export const Admin = () => {
@@ -142,7 +141,7 @@ export const Admin = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, onUpload: (url: string) => void) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onUpload: (url: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -163,44 +162,29 @@ export const Admin = () => {
     setUploadProgress(0);
     setUploadError('');
 
-    try {
-      const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+    const formData = new FormData();
+    formData.append('image', file);
 
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => {
-          console.error('Upload failed', error);
-          setUploadStatus('error');
-          setUploadError(error.message || 'Upload failed');
-          setTimeout(() => {
-            setUploadStatus('idle');
-            setUploadError('');
-          }, 5000);
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            onUpload(downloadURL);
-            setUploadStatus('success');
-            setTimeout(() => setUploadStatus('idle'), 2000);
-          }).catch((error) => {
-            console.error('Failed to get download URL', error);
-            setUploadStatus('error');
-            setUploadError('Failed to get download URL');
-            setTimeout(() => {
-              setUploadStatus('idle');
-              setUploadError('');
-            }, 5000);
-          });
-        }
-      );
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Upload failed');
+      }
+
+      const data = await response.json();
+      onUpload(data.url);
+      setUploadStatus('success');
+      setUploadProgress(100);
+      setTimeout(() => setUploadStatus('idle'), 2000);
     } catch (error: any) {
-      console.error('Error initiating upload:', error);
+      console.error('Upload failed', error);
       setUploadStatus('error');
-      setUploadError(error.message || 'Failed to start upload');
+      setUploadError(error.message || 'Upload failed');
       setTimeout(() => {
         setUploadStatus('idle');
         setUploadError('');

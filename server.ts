@@ -47,7 +47,20 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage });
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico)$/i)) {
+      return cb(new Error("Only image files are allowed!"), false);
+    }
+    cb(null, true);
+  },
+});
 
 async function startServer() {
   const app = express();
@@ -68,12 +81,24 @@ async function startServer() {
   });
 
   // Upload API
-  app.post("/api/upload", upload.single("image"), (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
+  const uploadMiddleware = upload.single("image");
+  app.post("/api/upload", (req, res) => {
+    uploadMiddleware(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+        return res.status(400).json({ message: `Upload error: ${err.message}` });
+      } else if (err) {
+        // An unknown error occurred when uploading.
+        return res.status(400).json({ message: `Upload error: ${err.message}` });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      const url = `/uploads/${req.file.filename}`;
+      res.json({ url });
+    });
   });
 
   // Content API
