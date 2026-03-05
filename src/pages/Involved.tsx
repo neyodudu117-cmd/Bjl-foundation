@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Users, HandHelping, Megaphone, Heart, ArrowRight } from 'lucide-react';
 import { SectionHeading } from '../components/Common';
 import { Page, InvolvedContent } from '../types';

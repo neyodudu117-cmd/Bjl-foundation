@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Search, Calendar, User, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionHeading, BlogCard, cn } from '../components/Common';
 import { BLOG_POSTS } from '../constants';

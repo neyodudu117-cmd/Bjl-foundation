@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { LogIn, Save, Plus, Trash2, Edit2, Check, X, Upload, Image as ImageIcon, Users } from 'lucide-react';
 import { PROGRAMS, STATS, TESTIMONIALS, BLOG_POSTS } from '../constants';
 import { Program, Stat, Testimonial, BlogPost, TeamMember, ContactInfo, InvolvedContent } from '../types';
-import { auth, db, storage } from '../lib/firebase';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-const COLLECTION_NAME = 'content';
 
 export const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -42,11 +36,25 @@ export const Admin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, username, password);
-      // Auth state listener will handle the rest
-    } catch (err: any) {
-      console.error("Firebase login failed", err);
-      // Fallback for static hosting (Netlify) without Firebase configured
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setIsLoggedIn(true);
+          localStorage.setItem('admin_user', JSON.stringify(data.user));
+          fetchContent();
+        } else {
+          setError(data.message);
+        }
+      } else {
+        throw new Error('Server error');
+      }
+    } catch (err) {
+      // Fallback for static hosting (Netlify)
       if (username === 'admin' && password === 'admin123') {
         setIsLoggedIn(true);
         localStorage.setItem('admin_user', JSON.stringify({ username: 'admin' }));
@@ -62,16 +70,15 @@ export const Admin = () => {
     for (const key of keys) {
       let data = null;
       try {
-        const docRef = doc(db, COLLECTION_NAME, key);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          data = docSnap.data().value;
+        const res = await fetch(`/api/content/${key}`);
+        if (res.ok) {
+          data = await res.json();
         }
       } catch (err) {
-        console.error(`Failed to fetch ${key} from Firebase, checking local storage`, err);
+        console.error(`Failed to fetch ${key}, checking local storage`, err);
       }
 
-      // Fallback to localStorage if Firebase failed or data not found
+      // Fallback to localStorage if API failed
       if (!data) {
         const localData = localStorage.getItem(`content_${key}`);
         if (localData) {
@@ -157,26 +164,47 @@ export const Admin = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onUpload: (url: string) => void) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, onUpload: (url: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadStatus('uploading');
     setUploadProgress(0);
     
-    try {
-      // Try Firebase Storage first
-      const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      onUpload(downloadURL);
-      setUploadStatus('success');
-      setTimeout(() => setUploadStatus('idle'), 2000);
-    } catch (err) {
-      console.error("Firebase upload failed, falling back to local Base64", err);
+    // Try API upload first
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload', true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          onUpload(data.url);
+          setUploadStatus('success');
+          setTimeout(() => setUploadStatus('idle'), 2000);
+        } catch (e) {
+          fallbackToLocalFile(file, onUpload);
+        }
+      } else {
+        fallbackToLocalFile(file, onUpload);
+      }
+    };
+
+    xhr.onerror = () => {
       fallbackToLocalFile(file, onUpload);
-    }
+    };
+
+    xhr.send(formData);
   };
 
   const fallbackToLocalFile = (file: File, onUpload: (url: string) => void) => {
@@ -199,10 +227,14 @@ export const Admin = () => {
 
   const saveContent = async (key: string, value: any) => {
     try {
-      await setDoc(doc(db, COLLECTION_NAME, key), { value });
+      const res = await fetch(`/api/content/${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value }),
+      });
+      if (!res.ok) throw new Error('API failed');
       alert('Saved successfully!');
     } catch (err) {
-      console.error(`Failed to save ${key} to Firebase, saving locally`, err);
       // Fallback to localStorage
       try {
         localStorage.setItem(`content_${key}`, JSON.stringify(value));
@@ -214,24 +246,11 @@ export const Admin = () => {
   };
 
   useEffect(() => {
-    // Check for Firebase Auth
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsLoggedIn(true);
-        fetchContent();
-      } else {
-        // Check for local fallback user
-        const localUser = localStorage.getItem('admin_user');
-        if (localUser) {
-          setIsLoggedIn(true);
-          fetchContent();
-        } else {
-          setIsLoggedIn(false);
-        }
-      }
-    });
-
-    return () => unsubscribe();
+    const user = localStorage.getItem('admin_user');
+    if (user) {
+      setIsLoggedIn(true);
+      fetchContent();
+    }
   }, []);
 
   if (!isLoggedIn) {

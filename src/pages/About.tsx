@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Shield, Users, Award, Heart, CheckCircle2, Target, Star, Briefcase, Scale, Zap, BookOpen } from 'lucide-react';
 import { SectionHeading } from '../components/Common';
 import { CORE_VALUES, GOALS, VISION, MISSION } from '../constants';

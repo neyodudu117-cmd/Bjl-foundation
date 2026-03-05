@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Heart, Users, GraduationCap, Home as HomeIcon, HeartPulse, CheckCircle2 } from 'lucide-react';
 import { SectionHeading, ProgramCard, ImpactStat, TestimonialCard, BlogCard } from '../components/Common';
 import { PROGRAMS, STATS, TESTIMONIALS, BLOG_POSTS, MISSION, VISION } from '../constants';
