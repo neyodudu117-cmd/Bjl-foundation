@@ -237,7 +237,7 @@ export const Admin = () => {
       addToast('General settings saved successfully!', 'success');
     } catch (error) {
       console.error('Error saving general settings:', error);
-      addToast('Failed to save general settings.', 'error');
+      addToast(`Failed to save general settings: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     }
   };
 
