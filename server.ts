@@ -98,12 +98,6 @@ async function startServer() {
     res.json({ url });
   });
 
-  // Debug route for other methods on /api/upload
-  app.all("/api/upload", (req, res) => {
-    console.log(`Method ${req.method} not allowed on /api/upload`);
-    res.status(405).json({ message: "Method Not Allowed. Use POST." });
-  });
-
   // Content API
   app.get("/api/content/:key", (req, res) => {
     const { key } = req.params;
