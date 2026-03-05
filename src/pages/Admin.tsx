@@ -146,7 +146,10 @@ export const Admin = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onUpload: (url: string) => void) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      addToast('No file selected. Please choose an image to upload.', 'error');
+      return;
+    }
 
     // Reset input value to allow selecting the same file again
     e.target.value = '';
@@ -154,14 +157,14 @@ export const Admin = () => {
     // Check file type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon'];
     if (!validTypes.includes(file.type)) {
-      addToast('Invalid file type. Please upload an image (JPG, PNG, GIF, WEBP, SVG, ICO).', 'error');
+      addToast('Unsupported file type. Please upload a valid image (JPG, PNG, GIF, WEBP, SVG, or ICO).', 'error');
       return;
     }
 
     // Check file size (10MB limit)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      addToast(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum allowed size is 10MB.`, 'error');
+      addToast(`File size exceeds the 10MB limit. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB. Please choose a smaller file.`, 'error');
       return;
     }
 
