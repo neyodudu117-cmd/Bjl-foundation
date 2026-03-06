@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Heart } from 'lucide-react';
 import { Page } from '../types';
@@ -22,19 +22,22 @@ export const Navbar = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const faviconUrl = useMemo(() => settings.favicon ? `${settings.favicon}?t=${new Date().getTime()}` : '', [settings.favicon]);
+  const logoUrl = useMemo(() => settings.logo ? `${settings.logo}?t=${new Date().getTime()}` : '', [settings.logo]);
+
   useEffect(() => {
-    if (settings.favicon) {
+    if (faviconUrl) {
       const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
       if (link) {
-        link.href = settings.favicon;
+        link.href = faviconUrl;
       } else {
         const newLink = document.createElement('link');
         newLink.rel = 'icon';
-        newLink.href = settings.favicon;
+        newLink.href = faviconUrl;
         document.head.appendChild(newLink);
       }
     }
-  }, [settings.favicon]);
+  }, [faviconUrl]);
 
   const navLinks: { label: string; id: Page }[] = [
     { label: 'Home', id: 'home' },
@@ -56,8 +59,8 @@ export const Navbar = ({
           onClick={() => setCurrentPage('home')}
           className="flex items-center gap-2 group"
         >
-          {settings.logo ? (
-            <img src={settings.logo} alt="BJL Foundation" className="h-12 w-auto object-contain" />
+          {logoUrl ? (
+            <img src={logoUrl} alt="BJL Foundation" className="h-12 w-auto object-contain" />
           ) : (
             <>
               <div className="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center group-hover:bg-brand-gold transition-colors overflow-hidden">
