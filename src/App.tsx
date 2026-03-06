@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Analytics } from '@vercel/analytics/react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
@@ -66,6 +67,7 @@ export default function App() {
         </main>
 
         <Footer setCurrentPage={setCurrentPage} />
+        <Analytics />
       </div>
     </ToastProvider>
   );
